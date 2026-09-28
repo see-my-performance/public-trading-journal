@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Trading Journal - Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        term: {
+                            bg: '#0b0f17',
+                            panel: '#111827',
+                            border: '#1f293d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 45s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body class="bg-term-bg text-slate-200 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- Top Banner -->
+        <header class="bg-term-panel border border-term-border rounded-xl p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400">⚡</span> Performance Dashboard
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Live View-Only Performance & Trade Records</p>
+            </div>
+            <div class="bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs px-3 py-1.5 rounded-lg font-mono">
+                👁️ VIEW-ONLY MODE
+            </div>
+        </header>
+
+        <!-- Marquee Ticker -->
+        <div class="bg-term-panel border border-term-border rounded-xl py-2 px-4 overflow-hidden">
+            <div class="animate-marquee font-mono text-xs text-slate-300">
+                <span class="text-emerald-400 font-bold mr-4">💡 TRADING DISCIPLINE:</span>
+                <span class="mr-8">"Plan your trade and trade your plan."</span>
+                <span class="text-slate-600 mr-8">•</span>
+                <span class="mr-8">"Control your risk first, and the profits will take care of themselves."</span>
+                <span class="text-slate-600 mr-8">•</span>
+                <span class="mr-8">"Cut your losses short and let your winners run."</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-term-panel border border-term-border p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Starting Balance</div>
+                <div class="text-xl font-bold font-mono text-white mt-1">$10,000.00</div>
+            </div>
+            <div class="bg-term-panel border border-term-border p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Current Balance</div>
+                <div id="statCurrentBalance" class="text-xl font-bold font-mono text-emerald-400 mt-1">$10,000.00</div>
+            </div>
+            <div class="bg-term-panel border border-term-border p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Win Rate</div>
+                <div id="statWinRate" class="text-xl font-bold font-mono text-cyan-400 mt-1">0%</div>
+            </div>
+            <div class="bg-term-panel border border-term-border p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Total Net P&L</div>
+                <div id="statTotalPnL" class="text-xl font-bold font-mono text-emerald-400 mt-1">+$0.00</div>
+            </div>
+        </div>
+
+        <!-- Recent Trades Table -->
+        <div class="bg-term-panel border border-term-border rounded-xl p-5">
+            <h2 class="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2">
+                📊 Execution Log
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs font-mono">
+                    <thead class="bg-slate-900/60 text-slate-400 border-b border-term-border">
+                        <tr>
+                            <th class="p-3">Date</th>
+                            <th class="p-3">Symbol</th>
+                            <th class="p-3">Direction</th>
+                            <th class="p-3">Risk ($)</th>
+                            <th class="p-3 text-right">P&L ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradeTableBody" class="divide-y divide-term-border">
+                        <!-- Trades populate dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Sample public trade data (Replace or update with your own trades)
+        const trades = [
+            { date: '2026-09-20', symbol: 'XAUUSD', direction: 'LONG', risk: 50, pnl: -50.30 },
+            { date: '2026-09-21', symbol: 'XAUUSD', direction: 'LONG', risk: 50, pnl: 199.40 },
+            { date: '2026-09-22', symbol: 'XAUUSD', direction: 'SHORT', risk: 50, pnl: -50.30 },
+            { date: '2026-09-23', symbol: 'EURUSD', direction: 'LONG', risk: 50, pnl: 4.70 },
+            { date: '2026-09-25', symbol: 'XAUUSD', direction: 'LONG', risk: 50, pnl: 80.00 },
+        ];
+
+        function renderPublicDashboard() {
+            const startingCapital = 10000;
+            let totalPnL = 0;
+            let wins = 0;
+
+            const tbody = document.getElementById('tradeTableBody');
+            tbody.innerHTML = '';
+
+            trades.forEach(t => {
+                totalPnL += t.pnl;
+                if (t.pnl > 0) wins++;
+
+                const isProfit = t.pnl >= 0;
+                const dirColor = t.direction.toUpperCase() === 'LONG' ? 'text-emerald-400' : 'text-rose-400';
+                const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="p-3 text-slate-300">${t.date}</td>
+                        <td class="p-3 font-bold text-white">${t.symbol}</td>
+                        <td class="p-3 font-bold ${dirColor}">${t.direction}</td>
+                        <td class="p-3 text-slate-400">$${t.risk.toFixed(2)}</td>
+                        <td class="p-3 text-right font-bold ${pnlColor}">
+                            ${isProfit ? '+' : ''}$${t.pnl.toFixed(2)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const currentBalance = startingCapital + totalPnL;
+            const winRate = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(1) : 0;
+
+            document.getElementById('statCurrentBalance').innerText = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('statWinRate').innerText = `${winRate}%`;
+
+            const pnlEl = document.getElementById('statTotalPnL');
+            pnlEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+            pnlEl.className = `text-xl font-bold font-mono mt-1 ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', renderPublicDashboard);
+    </script>
+</body>
+</html>
